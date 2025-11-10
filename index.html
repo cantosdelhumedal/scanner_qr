@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema QR - Framer</title>
+    <title>QR Scanner</title>
     <style>
         * {
             margin: 0;
@@ -14,431 +14,284 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: transparent;
-            padding: 0;
-            overflow-x: hidden;
-        }
-
-        .container {
-            max-width: 100%;
             padding: 20px;
         }
 
-        h1 {
+        .scanner-container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
             text-align: center;
             color: #333;
             margin-bottom: 20px;
-            font-size: 1.8em;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .progress-bar {
-            background: #e0e0e0;
-            height: 8px;
-            border-radius: 4px;
-            margin-bottom: 25px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            height: 100%;
-            width: 20%;
-            transition: width 0.5s ease;
-        }
-
-        .scanner-section {
-            background: #fff;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            border-top: 3px solid #667eea;
-        }
-
-        .scanner-section h3 {
-            margin-bottom: 15px;
-            color: #333;
-            font-size: 1.2em;
-            text-align: center;
+            font-size: 1.5em;
         }
 
         #qr-reader {
-            max-width: 400px;
-            margin: 0 auto 15px;
-            border-radius: 8px;
+            border-radius: 12px;
             overflow: hidden;
+            margin-bottom: 20px;
         }
 
-        .scanner-status {
-            padding: 12px;
-            border-radius: 8px;
+        .status {
             text-align: center;
-            margin: 15px 0;
-            font-size: 0.95em;
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
         }
 
-        .scanner-status.waiting {
+        .status.waiting {
             background: #fff3cd;
             color: #856404;
         }
 
-        .scanner-status.scanning {
+        .status.scanning {
             background: #d1ecf1;
             color: #0c5460;
+            animation: pulse 2s infinite;
         }
 
-        .scanner-status.success {
+        .status.success {
             background: #d4edda;
             color: #155724;
         }
 
-        .scanner-status.error {
+        .status.error {
             background: #f8d7da;
             color: #721c24;
         }
 
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
         .btn {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
+            width: 100%;
+            padding: 14px;
             border: none;
-            padding: 12px 24px;
-            border-radius: 20px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
-            font-size: 0.95em;
             transition: all 0.3s ease;
-            margin: 5px;
+            margin-bottom: 10px;
         }
 
-        .btn:hover {
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
 
         .btn-secondary {
             background: #6c757d;
+            color: white;
         }
 
-        .btn-secondary:hover {
+        .btn-secondary:hover:not(:disabled) {
             background: #5a6268;
         }
 
-        .pages-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 15px;
-            margin-bottom: 25px;
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
         }
 
-        .page-card {
-            background: #fff;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-            border-top: 3px solid #667eea;
+        .info {
+            background: #e7f3ff;
+            border-left: 4px solid #2196f3;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 16px;
+            font-size: 14px;
+            color: #1565c0;
         }
 
-        .page-card.unlocked {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        .scanned-codes {
+            margin-top: 20px;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 10px;
         }
 
-        .page-card.locked {
-            opacity: 0.6;
+        .scanned-codes h3 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .page-title {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 8px;
+        .code-list {
             display: flex;
-            align-items: center;
+            flex-direction: column;
             gap: 8px;
         }
 
-        .page-description {
-            color: #666;
-            margin-bottom: 12px;
-            font-size: 0.9em;
-            line-height: 1.5;
-        }
-
-        .qr-code-required {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
+        .code-item {
+            background: white;
+            padding: 10px;
             border-radius: 6px;
-            padding: 8px;
-            margin-bottom: 12px;
-            font-size: 0.85em;
-            color: #856404;
-        }
-
-        .stats {
-            text-align: center;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            color: #666;
-            font-size: 0.95em;
-        }
-
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #28a745;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            opacity: 0;
-            transform: translateX(100%);
-            transition: all 0.3s ease;
-            z-index: 1000;
-            max-width: 300px;
-        }
-
-        .notification.show {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        .notification.error {
-            background: #dc3545;
-        }
-
-        .controls {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin: 15px 0;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-            
-            h1 {
-                font-size: 1.5em;
-            }
-            
-            .pages-grid {
-                grid-template-columns: 1fr;
-            }
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #28a745;
+            border: 1px solid #28a745;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🔐 Sistema de Desbloqueo QR</h1>
+    <div class="scanner-container">
+        <h2>📱 Escáner QR</h2>
         
-        <div class="progress-bar">
-            <div class="progress-fill" id="progressFill"></div>
+        <div id="qr-reader"></div>
+        
+        <div id="status" class="status waiting">
+            Presiona "Iniciar Escáner" para comenzar
         </div>
 
-        <!-- Scanner QR -->
-        <div class="scanner-section">
-            <h3>📷 Escáner de Códigos QR</h3>
-            <div id="qr-reader"></div>
-            <div id="scanner-status" class="scanner-status waiting">
-                Presiona "Iniciar Escáner" para comenzar
-            </div>
-            <div class="controls">
-                <button class="btn" id="start-scanner">Iniciar Escáner</button>
-                <button class="btn btn-secondary" id="stop-scanner" disabled>Detener</button>
-            </div>
+        <button id="start-btn" class="btn btn-primary">
+            🚀 Iniciar Escáner
+        </button>
+        <button id="stop-btn" class="btn btn-secondary" style="display: none;">
+            ⏹️ Detener Escáner
+        </button>
+
+        <div class="info">
+            💡 <strong>Tip:</strong> Apunta la cámara directamente al código QR para un escaneo rápido.
         </div>
 
-        <!-- Grid de páginas -->
-        <div class="pages-grid" id="pagesGrid"></div>
-
-        <div class="stats">
-            <p><strong>Páginas desbloqueadas:</strong> <span id="unlockedCount">1</span> de <span id="totalCount">5</span></p>
+        <div class="scanned-codes" id="scanned-section" style="display: none;">
+            <h3>✅ Códigos Escaneados</h3>
+            <div class="code-list" id="code-list"></div>
         </div>
     </div>
 
-    <!-- Notificación -->
-    <div id="notification" class="notification"></div>
-
-    <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script>
-        const pages = [
-            {
-                id: 1,
-                title: "Inicio",
-                description: "Página principal del sistema.",
-                qrCode: "INICIO-2024",
-                unlocked: true
-            },
-            {
-                id: 2,
-                title: "Mi Perfil",
-                description: "Información personal del usuario.",
-                qrCode: "PERFIL-USER-2024",
-                unlocked: false
-            },
-            {
-                id: 3,
-                title: "Dashboard",
-                description: "Panel de control y estadísticas.",
-                qrCode: "DASHBOARD-ANALYTICS-2024",
-                unlocked: false
-            },
-            {
-                id: 4,
-                title: "Configuración",
-                description: "Ajustes del sistema.",
-                qrCode: "CONFIG-SETTINGS-2024",
-                unlocked: false
-            },
-            {
-                id: 5,
-                title: "Página Secreta",
-                description: "Contenido exclusivo.",
-                qrCode: "SECRET-MASTER-QR-2024",
-                unlocked: false
-            }
-        ];
+        let scanner = null;
+        let isScanning = false;
+        let scannedCodes = [];
 
-        let systemState = {
-            unlockedPages: [1],
-            qrScanner: null,
-            scannerRunning: false
-        };
+        const startBtn = document.getElementById('start-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const statusDiv = document.getElementById('status');
+        const scannedSection = document.getElementById('scanned-section');
+        const codeList = document.getElementById('code-list');
 
-        function initApp() {
-            renderPages();
-            updateProgress();
-            updateStats();
+        startBtn.onclick = startScanning;
+        stopBtn.onclick = stopScanning;
+
+        function startScanning() {
+            scanner = new Html5Qrcode("qr-reader");
             
-            document.getElementById('start-scanner').onclick = startQRScanner;
-            document.getElementById('stop-scanner').onclick = stopQRScanner;
-        }
-
-        function renderPages() {
-            const grid = document.getElementById('pagesGrid');
-            grid.innerHTML = '';
-
-            pages.forEach(page => {
-                const isUnlocked = systemState.unlockedPages.includes(page.id);
-                
-                const pageCard = document.createElement('div');
-                pageCard.className = `page-card ${isUnlocked ? 'unlocked' : 'locked'}`;
-                
-                pageCard.innerHTML = `
-                    <div class="page-title">
-                        <span>${isUnlocked ? '🔓' : '🔒'}</span>
-                        ${page.title}
-                    </div>
-                    <div class="page-description">${page.description}</div>
-                    ${!isUnlocked ? `
-                        <div class="qr-code-required">
-                            📱 Código: <strong>${page.qrCode}</strong>
-                        </div>
-                    ` : ''}
-                    <button class="btn" style="width: 100%; margin: 0;" ${!isUnlocked ? 'disabled' : ''}>
-                        ${isUnlocked ? '✓ Desbloqueado' : 'Bloqueado'}
-                    </button>
-                `;
-
-                grid.appendChild(pageCard);
-            });
-        }
-
-        function startQRScanner() {
-            if (systemState.scannerRunning) return;
-
-            systemState.qrScanner = new Html5Qrcode("qr-reader");
-            
-            systemState.qrScanner.start(
+            scanner.start(
                 { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 250, height: 250 } },
-                onScanSuccess
+                { 
+                    fps: 10, 
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0
+                },
+                onScanSuccess,
+                onScanError
             ).then(() => {
-                systemState.scannerRunning = true;
-                document.getElementById('start-scanner').disabled = true;
-                document.getElementById('stop-scanner').disabled = false;
-                updateScannerStatus('scanning', '📷 Escaneando... Apunta al código QR');
+                isScanning = true;
+                startBtn.style.display = 'none';
+                stopBtn.style.display = 'block';
+                updateStatus('scanning', '📷 Escaneando... Apunta al código QR');
             }).catch(err => {
-                updateScannerStatus('error', '❌ Error: ' + err);
+                updateStatus('error', '❌ Error al acceder a la cámara: ' + err);
+                console.error(err);
             });
         }
 
-        function stopQRScanner() {
-            if (!systemState.scannerRunning || !systemState.qrScanner) return;
-
-            systemState.qrScanner.stop().then(() => {
-                systemState.scannerRunning = false;
-                document.getElementById('start-scanner').disabled = false;
-                document.getElementById('stop-scanner').disabled = true;
-                updateScannerStatus('waiting', 'Escáner detenido');
-            });
-        }
-
-        function onScanSuccess(qrCode) {
-            const page = pages.find(p => p.qrCode === qrCode);
-            
-            if (page && !systemState.unlockedPages.includes(page.id)) {
-                systemState.unlockedPages.push(page.id);
-                updateProgress();
-                updateStats();
-                renderPages();
-                
-                updateScannerStatus('success', `✅ "${page.title}" desbloqueada!`);
-                showNotification(`🎉 Página desbloqueada!\n"${page.title}"`, 'success');
-                
-            } else if (page) {
-                updateScannerStatus('waiting', '⚠️ Esta página ya está desbloqueada');
-            } else {
-                updateScannerStatus('error', '❌ Código QR no reconocido');
+        function stopScanning() {
+            if (scanner && isScanning) {
+                scanner.stop().then(() => {
+                    isScanning = false;
+                    startBtn.style.display = 'block';
+                    stopBtn.style.display = 'none';
+                    updateStatus('waiting', '⏸️ Escáner detenido. Presiona el botón para continuar.');
+                }).catch(err => {
+                    console.error(err);
+                });
             }
         }
 
-        function updateScannerStatus(type, message) {
-            const status = document.getElementById('scanner-status');
-            status.className = `scanner-status ${type}`;
-            status.textContent = message;
-        }
+        function onScanSuccess(decodedText, decodedResult) {
+            // Evitar escaneos duplicados consecutivos
+            if (scannedCodes[scannedCodes.length - 1] === decodedText) {
+                return;
+            }
 
-        function updateProgress() {
-            const progress = (systemState.unlockedPages.length / pages.length) * 100;
-            document.getElementById('progressFill').style.width = progress + '%';
-        }
-
-        function updateStats() {
-            document.getElementById('unlockedCount').textContent = systemState.unlockedPages.length;
-            document.getElementById('totalCount').textContent = pages.length;
-        }
-
-        function showNotification(message, type = 'success') {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = `notification ${type} show`;
+            scannedCodes.push(decodedText);
+            updateStatus('success', `✅ ¡Código detectado! ${decodedText}`);
             
+            // Agregar a la lista visual
+            addCodeToList(decodedText);
+
+            // ENVIAR MENSAJE A FRAMER
+            if (window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'QR_CODE_SCANNED',
+                    code: decodedText,
+                    timestamp: Date.now()
+                }, '*');
+            }
+
+            // También enviar a window.top por si hay múltiples niveles de iframes
+            if (window.top !== window) {
+                window.top.postMessage({
+                    type: 'QR_CODE_SCANNED',
+                    code: decodedText,
+                    timestamp: Date.now()
+                }, '*');
+            }
+
+            // Volver a estado de escaneo después de 2 segundos
             setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
+                if (isScanning) {
+                    updateStatus('scanning', '📷 Escaneando... Busca el siguiente código');
+                }
+            }, 2000);
         }
 
+        function onScanError(errorMessage) {
+            // Ignorar errores normales de escaneo
+        }
+
+        function updateStatus(type, message) {
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+        }
+
+        function addCodeToList(code) {
+            scannedSection.style.display = 'block';
+            const codeItem = document.createElement('div');
+            codeItem.className = 'code-item';
+            codeItem.textContent = code;
+            codeList.appendChild(codeItem);
+        }
+
+        // Limpiar al cerrar
         window.addEventListener('beforeunload', () => {
-            if (systemState.qrScanner && systemState.scannerRunning) {
-                systemState.qrScanner.stop();
+            if (scanner && isScanning) {
+                scanner.stop();
             }
         });
-
-        window.onload = initApp;
     </script>
 </body>
 </html>
