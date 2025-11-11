@@ -166,3 +166,12 @@
     function updateStatus(type, message) {
       statusDiv.className = "status " + type;
       statusDiv.textContent = message;
+    }
+
+    // Detener escáner al salir
+    window.addEventListener("beforeunload", () => {
+      if (scanner && isScanning) scanner.stop();
+    });
+  </script>
+</body>
+</html>
