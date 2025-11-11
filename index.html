@@ -13,24 +13,25 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: transparent;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 20px;
+            min-height: 100vh;
         }
 
-        .scanner-container {
+        .scanner-modal {
             max-width: 500px;
             margin: 0 auto;
             background: white;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         }
 
         h2 {
             text-align: center;
             color: #333;
             margin-bottom: 20px;
-            font-size: 1.5em;
+            font-size: 1.8em;
         }
 
         #qr-reader {
@@ -42,9 +43,9 @@
         .status {
             text-align: center;
             padding: 16px;
-            border-radius: 10px;
+            border-radius: 12px;
             margin-bottom: 16px;
-            font-weight: 500;
+            font-weight: 600;
             transition: all 0.3s ease;
         }
 
@@ -108,59 +109,63 @@
         .btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
-            transform: none;
         }
 
         .info {
-            background: #e7f3ff;
+            background: #e3f2fd;
             border-left: 4px solid #2196f3;
-            padding: 12px;
-            border-radius: 8px;
+            padding: 14px;
+            border-radius: 10px;
             margin-top: 16px;
             font-size: 14px;
             color: #1565c0;
+            line-height: 1.6;
         }
 
-        .scanned-codes {
-            margin-top: 20px;
+        .success-message {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border-left: 4px solid #28a745;
             padding: 16px;
-            background: #f8f9fa;
             border-radius: 10px;
+            margin-top: 16px;
+            display: none;
         }
 
-        .scanned-codes h3 {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        .success-message.show {
+            display: block;
+            animation: slideIn 0.3s ease;
         }
 
-        .code-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+        .success-message h4 {
+            color: #155724;
+            margin-bottom: 8px;
         }
 
-        .code-item {
-            background: white;
-            padding: 10px;
-            border-radius: 6px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            color: #28a745;
-            border: 1px solid #28a745;
+        .success-message p {
+            color: #155724;
+            margin: 0;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
 <body>
-    <div class="scanner-container">
-        <h2>📱 Escáner QR</h2>
+    <div class="scanner-modal">
+        <h2>📱 Escáner de Códigos QR</h2>
         
         <div id="qr-reader"></div>
         
         <div id="status" class="status waiting">
-            Presiona "Iniciar Escáner" para comenzar
+            👆 Presiona "Iniciar Escáner" para comenzar
         </div>
 
         <button id="start-btn" class="btn btn-primary">
@@ -170,13 +175,13 @@
             ⏹️ Detener Escáner
         </button>
 
-        <div class="info">
-            💡 <strong>Tip:</strong> Apunta la cámara directamente al código QR para un escaneo rápido.
+        <div id="success-message" class="success-message">
+            <h4>✅ ¡Código Escaneado!</h4>
+            <p id="success-text"></p>
         </div>
 
-        <div class="scanned-codes" id="scanned-section" style="display: none;">
-            <h3>✅ Códigos Escaneados</h3>
-            <div class="code-list" id="code-list"></div>
+        <div class="info">
+            💡 <strong>Consejo:</strong> Mantén el código QR dentro del recuadro y asegúrate de tener buena iluminación para un escaneo rápido.
         </div>
     </div>
 
@@ -184,13 +189,12 @@
     <script>
         let scanner = null;
         let isScanning = false;
-        let scannedCodes = [];
 
         const startBtn = document.getElementById('start-btn');
         const stopBtn = document.getElementById('stop-btn');
         const statusDiv = document.getElementById('status');
-        const scannedSection = document.getElementById('scanned-section');
-        const codeList = document.getElementById('code-list');
+        const successMessage = document.getElementById('success-message');
+        const successText = document.getElementById('success-text');
 
         startBtn.onclick = startScanning;
         stopBtn.onclick = stopScanning;
@@ -213,8 +217,8 @@
                 stopBtn.style.display = 'block';
                 updateStatus('scanning', '📷 Escaneando... Apunta al código QR');
             }).catch(err => {
-                updateStatus('error', '❌ Error al acceder a la cámara: ' + err);
-                console.error(err);
+                updateStatus('error', '❌ Error al acceder a la cámara. Verifica los permisos.');
+                console.error('Scanner error:', err);
             });
         }
 
@@ -224,49 +228,32 @@
                     isScanning = false;
                     startBtn.style.display = 'block';
                     stopBtn.style.display = 'none';
-                    updateStatus('waiting', '⏸️ Escáner detenido. Presiona el botón para continuar.');
+                    updateStatus('waiting', '⏸️ Escáner detenido.');
                 }).catch(err => {
-                    console.error(err);
+                    console.error('Stop error:', err);
                 });
             }
         }
 
-        function onScanSuccess(decodedText, decodedResult) {
-            // Evitar escaneos duplicados consecutivos
-            if (scannedCodes[scannedCodes.length - 1] === decodedText) {
-                return;
-            }
-
-            scannedCodes.push(decodedText);
-            updateStatus('success', `✅ ¡Código detectado! ${decodedText}`);
+        function onScanSuccess(decodedText) {
+            updateStatus('success', `✅ ¡Código detectado!`);
             
-            // Agregar a la lista visual
-            addCodeToList(decodedText);
+            successText.textContent = `Código: ${decodedText}`;
+            successMessage.classList.add('show');
 
             // ENVIAR MENSAJE A FRAMER
-            if (window.parent !== window) {
-                window.parent.postMessage({
-                    type: 'QR_CODE_SCANNED',
-                    code: decodedText,
-                    timestamp: Date.now()
-                }, '*');
-            }
+            sendToFramer({
+                type: 'QR_CODE_SCANNED',
+                code: decodedText,
+                timestamp: Date.now()
+            });
 
-            // También enviar a window.top por si hay múltiples niveles de iframes
-            if (window.top !== window) {
-                window.top.postMessage({
-                    type: 'QR_CODE_SCANNED',
-                    code: decodedText,
-                    timestamp: Date.now()
-                }, '*');
-            }
-
-            // Volver a estado de escaneo después de 2 segundos
             setTimeout(() => {
+                successMessage.classList.remove('show');
                 if (isScanning) {
                     updateStatus('scanning', '📷 Escaneando... Busca el siguiente código');
                 }
-            }, 2000);
+            }, 3000);
         }
 
         function onScanError(errorMessage) {
@@ -278,15 +265,16 @@
             statusDiv.textContent = message;
         }
 
-        function addCodeToList(code) {
-            scannedSection.style.display = 'block';
-            const codeItem = document.createElement('div');
-            codeItem.className = 'code-item';
-            codeItem.textContent = code;
-            codeList.appendChild(codeItem);
+        function sendToFramer(data) {
+            if (window.parent !== window) {
+                window.parent.postMessage(data, '*');
+            }
+            if (window.top !== window) {
+                window.top.postMessage(data, '*');
+            }
+            console.log('Mensaje enviado a Framer:', data);
         }
 
-        // Limpiar al cerrar
         window.addEventListener('beforeunload', () => {
             if (scanner && isScanning) {
                 scanner.stop();
