@@ -1,285 +1,168 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Scanner</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Escáner QR - Framer</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: transparent;
+    }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px;
-            min-height: 100vh;
-        }
+    .scanner-container {
+      max-width: 420px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
 
-        .scanner-modal {
-            max-width: 500px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
+    h2 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 20px;
+    }
 
-        h2 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 1.8em;
-        }
+    #qr-reader {
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
 
-        #qr-reader {
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 20px;
-        }
+    .status {
+      text-align: center;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
 
-        .status {
-            text-align: center;
-            padding: 16px;
-            border-radius: 12px;
-            margin-bottom: 16px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
+    .status.waiting { background: #fff3cd; color: #856404; }
+    .status.scanning { background: #d1ecf1; color: #0c5460; animation: pulse 2s infinite; }
+    .status.success { background: #d4edda; color: #155724; }
+    .status.error { background: #f8d7da; color: #721c24; }
 
-        .status.waiting {
-            background: #fff3cd;
-            color: #856404;
-        }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
 
-        .status.scanning {
-            background: #d1ecf1;
-            color: #0c5460;
-            animation: pulse 2s infinite;
-        }
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 8px;
+    }
 
-        .status.success {
-            background: #d4edda;
-            color: #155724;
-        }
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(118, 75, 162, 0.4);
+    }
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+    .btn-secondary:hover:not(:disabled) {
+      background: #5a6268;
+    }
 
-        .status.error {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-
-        .btn {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 10px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-secondary:hover:not(:disabled) {
-            background: #5a6268;
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .info {
-            background: #e3f2fd;
-            border-left: 4px solid #2196f3;
-            padding: 14px;
-            border-radius: 10px;
-            margin-top: 16px;
-            font-size: 14px;
-            color: #1565c0;
-            line-height: 1.6;
-        }
-
-        .success-message {
-            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-            border-left: 4px solid #28a745;
-            padding: 16px;
-            border-radius: 10px;
-            margin-top: 16px;
-            display: none;
-        }
-
-        .success-message.show {
-            display: block;
-            animation: slideIn 0.3s ease;
-        }
-
-        .success-message h4 {
-            color: #155724;
-            margin-bottom: 8px;
-        }
-
-        .success-message p {
-            color: #155724;
-            margin: 0;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    </style>
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
 </head>
 <body>
-    <div class="scanner-modal">
-        <h2>📱 Escáner de Códigos QR</h2>
-        
-        <div id="qr-reader"></div>
-        
-        <div id="status" class="status waiting">
-            👆 Presiona "Iniciar Escáner" para comenzar
-        </div>
+  <div class="scanner-container">
+    <h2>📷 Escáner QR</h2>
+    <div id="qr-reader"></div>
 
-        <button id="start-btn" class="btn btn-primary">
-            🚀 Iniciar Escáner
-        </button>
-        <button id="stop-btn" class="btn btn-secondary" style="display: none;">
-            ⏹️ Detener Escáner
-        </button>
-
-        <div id="success-message" class="success-message">
-            <h4>✅ ¡Código Escaneado!</h4>
-            <p id="success-text"></p>
-        </div>
-
-        <div class="info">
-            💡 <strong>Consejo:</strong> Mantén el código QR dentro del recuadro y asegúrate de tener buena iluminación para un escaneo rápido.
-        </div>
+    <div id="status" class="status waiting">
+      Presiona "Iniciar escáner" para comenzar
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-    <script>
-        let scanner = null;
-        let isScanning = false;
+    <button id="start-btn" class="btn btn-primary">🎯 Iniciar escáner</button>
+    <button id="stop-btn" class="btn btn-secondary" style="display:none;">⏹️ Detener escáner</button>
+  </div>
 
-        const startBtn = document.getElementById('start-btn');
-        const stopBtn = document.getElementById('stop-btn');
-        const statusDiv = document.getElementById('status');
-        const successMessage = document.getElementById('success-message');
-        const successText = document.getElementById('success-text');
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+  <script>
+    const ALLOWED_DOMAIN = "cantosdelhumedal.framer.website";
 
-        startBtn.onclick = startScanning;
-        stopBtn.onclick = stopScanning;
+    let scanner = null;
+    let isScanning = false;
 
-        function startScanning() {
-            scanner = new Html5Qrcode("qr-reader");
-            
-            scanner.start(
-                { facingMode: "environment" },
-                { 
-                    fps: 10, 
-                    qrbox: { width: 250, height: 250 },
-                    aspectRatio: 1.0
-                },
-                onScanSuccess,
-                onScanError
-            ).then(() => {
-                isScanning = true;
-                startBtn.style.display = 'none';
-                stopBtn.style.display = 'block';
-                updateStatus('scanning', '📷 Escaneando... Apunta al código QR');
-            }).catch(err => {
-                updateStatus('error', '❌ Error al acceder a la cámara. Verifica los permisos.');
-                console.error('Scanner error:', err);
-            });
-        }
+    const startBtn = document.getElementById("start-btn");
+    const stopBtn = document.getElementById("stop-btn");
+    const statusDiv = document.getElementById("status");
 
-        function stopScanning() {
-            if (scanner && isScanning) {
-                scanner.stop().then(() => {
-                    isScanning = false;
-                    startBtn.style.display = 'block';
-                    stopBtn.style.display = 'none';
-                    updateStatus('waiting', '⏸️ Escáner detenido.');
-                }).catch(err => {
-                    console.error('Stop error:', err);
-                });
-            }
-        }
+    startBtn.onclick = startScanning;
+    stopBtn.onclick = stopScanning;
 
-        function onScanSuccess(decodedText) {
-            updateStatus('success', `✅ ¡Código detectado!`);
-            
-            successText.textContent = `Código: ${decodedText}`;
-            successMessage.classList.add('show');
-
-            // ENVIAR MENSAJE A FRAMER
-            sendToFramer({
-                type: 'QR_CODE_SCANNED',
-                code: decodedText,
-                timestamp: Date.now()
-            });
-
-            setTimeout(() => {
-                successMessage.classList.remove('show');
-                if (isScanning) {
-                    updateStatus('scanning', '📷 Escaneando... Busca el siguiente código');
-                }
-            }, 3000);
-        }
-
-        function onScanError(errorMessage) {
-            // Ignorar errores normales de escaneo
-        }
-
-        function updateStatus(type, message) {
-            statusDiv.className = `status ${type}`;
-            statusDiv.textContent = message;
-        }
-
-        function sendToFramer(data) {
-            if (window.parent !== window) {
-                window.parent.postMessage(data, '*');
-            }
-            if (window.top !== window) {
-                window.top.postMessage(data, '*');
-            }
-            console.log('Mensaje enviado a Framer:', data);
-        }
-
-        window.addEventListener('beforeunload', () => {
-            if (scanner && isScanning) {
-                scanner.stop();
-            }
+    function startScanning() {
+      scanner = new Html5Qrcode("qr-reader");
+      scanner
+        .start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
+          onScanSuccess
+        )
+        .then(() => {
+          isScanning = true;
+          startBtn.style.display = "none";
+          stopBtn.style.display = "block";
+          updateStatus("scanning", "📡 Escaneando... apunta al código QR");
+        })
+        .catch((err) => {
+          updateStatus("error", "⚠️ Error al acceder a la cámara: " + err);
         });
-    </script>
-</body>
-</html>
+    }
+
+    function stopScanning() {
+      if (scanner && isScanning) {
+        scanner.stop().then(() => {
+          isScanning = false;
+          startBtn.style.display = "block";
+          stopBtn.style.display = "none";
+          updateStatus("waiting", "⏸️ Escáner detenido.");
+        });
+      }
+    }
+
+    function onScanSuccess(decodedText) {
+      if (!decodedText) return;
+
+      // Validar dominio permitido
+      try {
+        const url = new URL(decodedText);
+        if (url.hostname === ALLOWED_DOMAIN) {
+          updateStatus("success", "✅ Código válido, redirigiendo...");
+          setTimeout(() => {
+            // Redirección dentro del proyecto Framer (abre dentro del mismo iframe o pestaña)
+            window.top.location.href = url.href;
+          }, 1200);
+        } else {
+          updateStatus("error", "🚫 Dominio no permitido: " + url.hostname);
+        }
+      } catch (e) {
+        updateStatus("error", "❌ Código no es una URL válida.");
+      }
+    }
+
+    function updateStatus(type, message) {
+      statusDiv.className = "status " + type;
+      statusDiv.textContent = message;
